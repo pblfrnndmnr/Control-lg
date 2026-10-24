@@ -1,0 +1,93 @@
+{
+  "id": "/",
+  "name": "LG ThinQ Smart Remote",
+  "short_name": "LG Remote",
+  "description": "Control remoto inteligente para televisores LG Smart TV con control por Wi-Fi de encendido, volumen, aplicaciones webOS y asistente IA con Gemini.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "lang": "es",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": ["utilities", "entertainment"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "LG ThinQ Smart Remote - Control Principal"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "LG ThinQ Smart Remote - Panel Completo"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Encender / Apagar TV",
+      "short_name": "Power",
+      "description": "Encender o apagar el televisor LG vinculado",
+      "url": "/?action=power",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Silencio (Mute)",
+      "short_name": "Mute",
+      "description": "Silenciar o reactivar el sonido",
+      "url": "/?action=mute",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Temporizador de Apagado",
+      "short_name": "Sleep Timer",
+      "description": "Programar apagado automático en 30, 60 o 90 min",
+      "url": "/?action=timer",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

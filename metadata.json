@@ -1,0 +1,6 @@
+{
+  "name": "LG ThinQ Smart Remote",
+  "description": "Control remoto inteligente para televisores LG Smart TV con control por Wi-Fi de encendido, volumen, aplicaciones webOS y asistente IA con Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
