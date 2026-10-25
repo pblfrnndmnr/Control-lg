@@ -14,13 +14,15 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 20
+      - name: Configurar Node.js 22 (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Instalar dependencias del proyecto
-        run: npm install
+        run: |
+          npm install
+          npm install --save @capacitor/core @capacitor/android @capacitor/cli
 
       - name: Compilar App Web de Producción
         run: npm run build
@@ -32,15 +34,31 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Configurar Android SDK preinstalado en GitHub
+      - name: Aceptar Licencias de Android SDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
           mkdir -p "$ANDROID_HOME/licenses" || true
           echo -e "\n24333f8a63831872d90783f4762d79f4f14fe07b\n84831b9409646a518e32b31499fc02f2b970e65d\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" || true
           yes | sdkmanager --licenses 2>/dev/null || true
 
-      - name: Sincronizar Proyecto Android (Capacitor)
+      - name: Preparar y Sincronizar Proyecto Android (Capacitor)
         run: |
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            cat << 'EOF' > capacitor.config.json
+            {
+              "appId": "com.lgremote.thinq",
+              "appName": "LG Remote",
+              "webDir": "dist",
+              "server": {
+                "cleartext": true,
+                "androidScheme": "http"
+              },
+              "android": {
+                "allowMixedContent": true
+              }
+            }
+          EOF
+          fi
           if [ ! -d "android" ]; then
             npx cap add android
           fi
