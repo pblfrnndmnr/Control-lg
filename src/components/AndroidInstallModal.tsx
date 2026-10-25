@@ -102,20 +102,31 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Empaquetar APK con Bubblewrap / Capacitor
+      - name: Sincronizar Proyecto Android (Capacitor)
         run: |
-          npx --yes @bubblewrap/cli init --manifest=https://localhost:3000/manifest.webmanifest || true
-          echo "Compilación automatizada completada"
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Compilar APK con Gradle
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          cd ..
+          find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./LG-Remote-v1.0.0-debug.apk \;
 
       - name: Subir APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: LG-Remote-Android-APK
-          path: '*.apk'`;
+          path: LG-Remote-v1.0.0-debug.apk`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">

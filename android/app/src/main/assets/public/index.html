@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <script>
+      (function() {
+        // Suppress Vite HMR WebSocket errors in AI Studio cloud preview environment
+        if (typeof window !== 'undefined') {
+          window.addEventListener('unhandledrejection', function(event) {
+            var reason = event && event.reason;
+            var msg = reason && (reason.message || String(reason));
+            var stack = (reason && reason.stack) || '';
+            if (msg && (msg.indexOf('WebSocket closed without opened') !== -1 || stack.indexOf('@vite/client') !== -1)) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          });
+          window.addEventListener('error', function(event) {
+            var msg = event && (event.message || '');
+            var filename = event && (event.filename || '');
+            if (msg.indexOf('WebSocket closed without opened') !== -1 || filename.indexOf('@vite/client') !== -1) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          });
+          if (window.WebSocket) {
+            var NativeWS = window.WebSocket;
+            function FakeHmrWS(url, protocols) {
+              var isHmr = protocols === 'vite-hmr' || 
+                (Array.isArray(protocols) && protocols.indexOf('vite-hmr') !== -1) ||
+                (typeof url === 'string' && (url.indexOf('token=') !== -1 || url.indexOf('vite-hmr') !== -1));
+              if (isHmr) {
+                var target = new EventTarget();
+                target.readyState = 1;
+                target.OPEN = 1;
+                target.CONNECTING = 0;
+                target.CLOSING = 2;
+                target.CLOSED = 3;
+                target.url = url || '';
+                target.protocol = 'vite-hmr';
+                target.send = function() {};
+                target.close = function() {};
+                return target;
+              }
+              return new NativeWS(url, protocols);
+            }
+            FakeHmrWS.CONNECTING = 0;
+            FakeHmrWS.OPEN = 1;
+            FakeHmrWS.CLOSING = 2;
+            FakeHmrWS.CLOSED = 3;
+            FakeHmrWS.prototype = NativeWS.prototype;
+            window.WebSocket = FakeHmrWS;
+          }
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>LG ThinQ Smart Remote</title>
+    <meta name="description" content="Control remoto inteligente para televisores LG Smart TV con control por Wi-Fi de encendido, volumen, aplicaciones webOS y asistente IA con Gemini." />
+    <meta property="og:title" content="LG ThinQ Smart Remote" />
+    <meta property="og:description" content="Control remoto inteligente para televisores LG Smart TV con control por Wi-Fi de encendido, volumen, aplicaciones webOS y asistente IA con Gemini." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="LG Remote" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-BYX4UGtO.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-D3okLI64.css">
+  <link rel="manifest" href="/manifest.json"></head>
+  <body class="bg-slate-950 text-slate-100 antialiased selection:bg-rose-600 selection:text-white font-['Plus_Jakarta_Sans',sans-serif]">
+    <div id="root"></div>
+    <script>
+      // Register Progressive Web App Service Worker
+      if ('serviceWorker' in navigator) {
+        var registerSW = function() {
+          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then(function(registration) {
+              console.log('[PWA] Service Worker registrado exitosamente con scope:', registration.scope);
+            })
+            .catch(function(error) {
+              console.warn('[PWA] Error al registrar Service Worker:', error);
+            });
+        };
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          registerSW();
+        } else {
+          window.addEventListener('DOMContentLoaded', registerSW);
+          window.addEventListener('load', registerSW);
+        }
+      }
+    </script>
+  </body>
+</html>
