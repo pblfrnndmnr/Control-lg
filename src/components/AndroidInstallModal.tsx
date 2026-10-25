@@ -90,10 +90,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Instalar dependencias
-        run: npm ci || npm install
+        run: npm install
 
       - name: Build Web App
         run: npm run build

@@ -18,10 +18,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Instalar dependencias del proyecto
-        run: npm ci || npm install
+        run: npm install
 
       - name: Compilar App Web de Producción
         run: npm run build
