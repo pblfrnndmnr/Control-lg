@@ -36,10 +36,10 @@ jobs:
 
       - name: Aceptar Licencias de Android SDK
         run: |
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
           mkdir -p "$ANDROID_HOME/licenses" || true
           echo -e "\n24333f8a63831872d90783f4762d79f4f14fe07b\n84831b9409646a518e32b31499fc02f2b970e65d\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" || true
-          yes | sdkmanager --licenses 2>/dev/null || true
+          echo -e "\n856352d0422bf23a34fb04d842c599ad3d8eb723" > "$ANDROID_HOME/licenses/android-sdk-preview-license" || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
       - name: Preparar y Sincronizar Proyecto Android (Capacitor)
         run: |
@@ -62,13 +62,18 @@ jobs:
           if [ ! -d "android" ]; then
             npx cap add android
           fi
+          # Asegurar SDK version 34 (Android 14) preinstalado en GitHub
+          if [ -f "android/variables.gradle" ]; then
+            sed -i 's/compileSdkVersion = 36/compileSdkVersion = 34/g' android/variables.gradle || true
+            sed -i 's/targetSdkVersion = 36/targetSdkVersion = 34/g' android/variables.gradle || true
+          fi
           npx cap sync android
 
       - name: Compilar APK con Gradle
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
           cd ..
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./LG-Remote-v1.0.0-debug.apk \;
 

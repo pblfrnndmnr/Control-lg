@@ -104,17 +104,37 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Configurar Android SDK preinstalado en GitHub
+      - name: Aceptar Licencias de Android SDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           mkdir -p "$ANDROID_HOME/licenses" || true
           echo -e "\n24333f8a63831872d90783f4762d79f4f14fe07b\n84831b9409646a518e32b31499fc02f2b970e65d\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" || true
-          yes | sdkmanager --licenses 2>/dev/null || true
+          echo -e "\n856352d0422bf23a34fb04d842c599ad3d8eb723" > "$ANDROID_HOME/licenses/android-sdk-preview-license" || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
 
-      - name: Sincronizar Proyecto Android (Capacitor)
+      - name: Preparar y Sincronizar Proyecto Android (Capacitor)
         run: |
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            cat << 'EOF' > capacitor.config.json
+            {
+              "appId": "com.lgremote.thinq",
+              "appName": "LG Remote",
+              "webDir": "dist",
+              "server": {
+                "cleartext": true,
+                "androidScheme": "http"
+              },
+              "android": {
+                "allowMixedContent": true
+              }
+            }
+          EOF
+          fi
           if [ ! -d "android" ]; then
             npx cap add android
+          fi
+          if [ -f "android/variables.gradle" ]; then
+            sed -i 's/compileSdkVersion = 36/compileSdkVersion = 34/g' android/variables.gradle || true
+            sed -i 's/targetSdkVersion = 36/targetSdkVersion = 34/g' android/variables.gradle || true
           fi
           npx cap sync android
 
@@ -122,7 +142,7 @@ jobs:
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
           cd ..
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} ./LG-Remote-v1.0.0-debug.apk \;
 
