@@ -21,7 +21,7 @@ jobs:
           cache: 'npm'
 
       - name: Instalar dependencias del proyecto
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Compilar App Web de Producción
         run: npm run build

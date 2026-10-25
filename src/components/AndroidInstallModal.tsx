@@ -93,7 +93,7 @@ jobs:
           cache: 'npm'
 
       - name: Instalar dependencias
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Build Web App
         run: npm run build
