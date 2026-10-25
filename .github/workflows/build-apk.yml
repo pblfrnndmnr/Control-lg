@@ -32,8 +32,12 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Configurar Android SDK preinstalado en GitHub
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME/licenses" || true
+          echo -e "\n24333f8a63831872d90783f4762d79f4f14fe07b\n84831b9409646a518e32b31499fc02f2b970e65d\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" || true
+          yes | sdkmanager --licenses 2>/dev/null || true
 
       - name: Sincronizar Proyecto Android (Capacitor)
         run: |
