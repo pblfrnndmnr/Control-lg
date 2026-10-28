@@ -88,8 +88,38 @@ export const DeviceScannerModal: React.FC<DeviceScannerModalProps> = ({
   const [perTvDiagnostic, setPerTvDiagnostic] = useState<Record<string, { loading: boolean; result: DiagnosticResult | null }>>({});
 
   const [wolSuccess, setWolSuccess] = useState<string | null>(null);
+  const [isSsdpScanning, setIsSsdpScanning] = useState(false);
+  const [ssdpMessage, setSsdpMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  // SSDP M-SEARCH UDP Multicast Scanner (webOS target urn:lge-com:service:webos:secondscreen-1)
+  const handleStartSsdpScan = async () => {
+    playHapticClick(700);
+    setIsSsdpScanning(true);
+    setSsdpMessage('Emitiendo M-SEARCH UDP a 239.255.255.250:1900...');
+    try {
+      const res = await fetch('/api/tv/discover-ssdp');
+      const data = await res.json();
+      if (data && data.devices && data.devices.length > 0) {
+        let added = 0;
+        for (const dev of data.devices) {
+          if (!availableTVs.some((t) => t.ip === dev.ip)) {
+            onAddPhysicalTV(dev.ip, dev.model || `LG webOS TV (${dev.ip})`);
+            added++;
+          }
+        }
+        setSsdpMessage(`¡SSDP detectó ${data.devices.length} televisor(es) LG! (${added} nuevos añadidos)`);
+        playSuccessBeep();
+      } else {
+        setSsdpMessage('SSDP finalizado: No se recibieron paquetes UDP. Utiliza el escaneo de subred.');
+      }
+    } catch {
+      setSsdpMessage('Descubrimiento SSDP no disponible en este entorno. Usa el escaneo de subred.');
+    } finally {
+      setIsSsdpScanning(false);
+    }
+  };
 
   // Active Subnet Scanner
   const handleStartSubnetScan = async () => {
@@ -310,6 +340,34 @@ export const DeviceScannerModal: React.FC<DeviceScannerModalProps> = ({
         {/* TAB 1: LIST & SCAN */}
         {activeTab === 'scan' && (
           <div className="space-y-4">
+            {/* Quick 3-Step Setup Guide */}
+            <div className="p-3.5 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 border border-amber-800/60 rounded-2xl flex flex-col gap-2 shadow-inner">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>¿Por qué tu TV no responde? 3 Pasos obligatorios:</span>
+              </div>
+              <ol className="text-[11px] text-slate-300 space-y-1.5 list-decimal pl-4 leading-relaxed">
+                <li>
+                  <strong>En tu televisor LG (mando físico):</strong> Ve a <em>Ajustes (⚙️) ➔ General ➔ Dispositivos / Red ➔ "LG Connect Apps" (o "Encender mediante Wi-Fi" / "Control por IP")</em> y ponlo en <strong>ACTIVADO</strong>.
+                </li>
+                <li>
+                  <strong>Misma red Wi-Fi:</strong> Tu móvil o PC debe estar en el mismo Wi-Fi que el TV (desactiva datos móviles 4G/5G).
+                </li>
+                <li>
+                  <strong>Autorización SSL en Chrome:</strong> Como esta web corre en HTTPS, abre{' '}
+                  <a
+                    href={`https://${activeTV.ip || '192.168.1.50'}:3001`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-400 font-mono underline font-bold"
+                  >
+                    https://{activeTV.ip || '192.168.1.50'}:3001
+                  </a>{' '}
+                  y toca <em>"Configuración avanzada ➔ Acceder a la IP"</em>, <strong>o descarga el Mando Local (.html)</strong> que no tiene restricciones.
+                </li>
+              </ol>
+            </div>
+
             {/* Subnet Scanner Bar */}
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col gap-2.5">
               <div className="flex items-center justify-between text-xs">
@@ -332,13 +390,29 @@ export const DeviceScannerModal: React.FC<DeviceScannerModalProps> = ({
 
                 <button
                   onClick={handleStartSubnetScan}
-                  disabled={isScanning}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-rose-400 flex items-center gap-1.5 transition-colors disabled:opacity-50 shrink-0 border border-slate-700"
+                  disabled={isScanning || isSsdpScanning}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-rose-400 flex items-center gap-1.5 transition-colors disabled:opacity-50 shrink-0 border border-slate-700"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin text-rose-400' : ''}`} />
-                  <span>{isScanning ? 'Escaneando...' : 'Escanear'}</span>
+                  <span>{isScanning ? 'Subred...' : 'Subred IP'}</span>
+                </button>
+
+                <button
+                  onClick={handleStartSsdpScan}
+                  disabled={isScanning || isSsdpScanning}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-indigo-400 flex items-center gap-1.5 transition-colors disabled:opacity-50 shrink-0 border border-slate-700"
+                  title="Descubrimiento automático SSDP UDP Multicast (M-SEARCH a 239.255.255.250:1900)"
+                >
+                  <Radio className={`w-3.5 h-3.5 ${isSsdpScanning ? 'animate-pulse text-indigo-400' : ''}`} />
+                  <span>{isSsdpScanning ? 'Buscando...' : 'SSDP (UDP)'}</span>
                 </button>
               </div>
+
+              {ssdpMessage && (
+                <div className="text-[11px] font-mono px-2.5 py-1.5 rounded-xl bg-indigo-950/60 border border-indigo-800/60 text-indigo-300">
+                  {ssdpMessage}
+                </div>
+              )}
 
               {isScanning && (
                 <div className="space-y-1 pt-1">

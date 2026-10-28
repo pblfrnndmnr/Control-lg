@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">LG Remote</string>
-    <string name="title_activity_main">LG Remote</string>
-    <string name="package_name">com.lgremote.thinq</string>
-    <string name="custom_url_scheme">com.lgremote.thinq</string>
-</resources>

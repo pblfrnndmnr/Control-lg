@@ -25,6 +25,19 @@ export const WEBOS_APP_MANIFEST = {
       'WRITE_NOTIFICATION_TOAST',
       'READ_POWER_STATE',
       'READ_COUNTRY_INFO',
+      'READ_SETTINGS',
+      'WRITE_SETTINGS',
+      'CONTROL_AUDIO',
+      'CONTROL_POWER',
+      'CONTROL_TV_SCREEN',
+      'READ_TV_CHANNEL_LIST',
+      'READ_TV_CURRENT_TIME',
+      'READ_INPUT_DEVICE_LIST',
+      'LAUNCH',
+      'LAUNCH_WEBAPP',
+      'APP_TO_APP',
+      'CLOSE',
+      'TEST_OPEN',
     ],
     serial: '2f930e2d2cdc08497f64013db10b51cc',
   },
@@ -45,7 +58,12 @@ export const WEBOS_APP_MANIFEST = {
     'READ_POWER_STATE',
     'READ_COUNTRY_INFO',
     'READ_SETTINGS',
+    'WRITE_SETTINGS',
+    'CONTROL_POWER',
     'CONTROL_TV_SCREEN',
+    'READ_TV_CHANNEL_LIST',
+    'READ_TV_CURRENT_TIME',
+    'READ_INPUT_DEVICE_LIST',
   ],
 };
 
@@ -69,6 +87,7 @@ export class WebOSClient {
   private forcePairing: boolean = false;
   private isIntentionalClose: boolean = false;
   private pendingRequests = new Map<string | number, (response: any) => void>();
+  private heartbeatTimer: any = null;
 
   constructor() {
     //
@@ -277,6 +296,7 @@ export class WebOSClient {
       }
       this.onStateChange?.('connected', `¡Conectado exitosamente con ${this.ip}!`);
       this.initPointerSocket();
+      this.startHeartbeat();
       this.showToast('LG ThinQ Remote PWA conectado');
     }
 
@@ -420,8 +440,50 @@ export class WebOSClient {
     return this.sendCommand('tv/switchInput', { inputId });
   }
 
+  public play() {
+    return this.sendCommand('media.controls/play');
+  }
+
+  public pause() {
+    return this.sendCommand('media.controls/pause');
+  }
+
+  public stop() {
+    return this.sendCommand('media.controls/stop');
+  }
+
+  public rewind() {
+    return this.sendCommand('media.controls/rewind');
+  }
+
+  public fastForward() {
+    return this.sendCommand('media.controls/fastForward');
+  }
+
+  public getVolumeStatus() {
+    return this.sendCommand('audio/getVolumeStatus');
+  }
+
+  public startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.isConnected()) {
+        // Enviar consulta ligera para verificar socket activo (Keep-Alive)
+        this.sendCommand('audio/getVolumeStatus').catch(() => {});
+      }
+    }, 8000);
+  }
+
+  public stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   public disconnect() {
     this.isIntentionalClose = true;
+    this.stopHeartbeat();
     if (this.pointerWs) {
       try {
         this.pointerWs.close();

@@ -1,0 +1,12 @@
+.gcloudignore
+.git
+.github
+.gitignore
+android/
+*.jar
+*.apk
+*.py
+dev-dist/
+node_modules/
+.DS_Store
+*.log

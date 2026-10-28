@@ -210,25 +210,92 @@ Entrega un resumen estructurado y recomendaciones paso a paso para el control re
   }
 });
 
-// 3. Wake-on-LAN simulation & broadcast endpoint
+// 3. Wake-on-LAN real UDP broadcast endpoint
 app.post('/api/tv/wol', (req, res) => {
-  const { mac } = req.body;
+  const { mac, broadcastIp = '255.255.255.255', port: wolPort = 9 } = req.body;
   if (!mac || !validateMacAddress(mac)) {
     return res.status(400).json({ error: 'Dirección MAC inválida.' });
   }
 
   try {
     const packet = createWakeOnLanPacket(mac);
-    // In real physical LAN, this emits a UDP socket broadcast to port 9 / 7.
-    // In cloud / container sandbox, we validate the magic packet and return success.
+    const packetBuffer = Buffer.from(packet);
+    
+    // Enviar paquete mágico UDP real a la red local
+    import('dgram').then(({ default: dgram }) => {
+      const socket = dgram.createSocket('udp4');
+      socket.bind(() => {
+        try {
+          socket.setBroadcast(true);
+          socket.send(packetBuffer, 0, packetBuffer.length, Number(wolPort) || 9, broadcastIp, (err) => {
+            if (err) console.warn('[WoL] Error enviando broadcast UDP:', err.message);
+            try { socket.close(); } catch {}
+          });
+        } catch (e: any) {
+          console.warn('[WoL] Fallo de socket UDP:', e.message);
+          try { socket.close(); } catch {}
+        }
+      });
+    }).catch(() => {});
+
     res.json({
       success: true,
-      message: `Paquete mágico Wake-On-LAN enviado exitosamente a la MAC ${mac}`,
+      message: `Paquete mágico Wake-On-LAN (102 bytes) emitido a la MAC ${mac}`,
       packetBytes: packet.length,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.1. Descubrimiento SSDP en la red local
+app.get('/api/tv/discover-ssdp', async (req, res) => {
+  try {
+    const { default: dgram } = await import('dgram');
+    const discovered: Array<{ ip: string; location?: string; model?: string }> = [];
+    const client = dgram.createSocket('udp4');
+
+    const mSearchQuery = Buffer.from(
+      'M-SEARCH * HTTP/1.1\r\n' +
+      'HOST: 239.255.255.250:1900\r\n' +
+      'MAN: "ssdp:discover"\r\n' +
+      'MX: 2\r\n' +
+      'ST: urn:lge-com:service:webos:secondscreen-1\r\n\r\n'
+    );
+
+    client.on('message', (msg, rinfo) => {
+      const text = msg.toString();
+      if (!discovered.some((d) => d.ip === rinfo.address)) {
+        const locationMatch = text.match(/LOCATION:\s*(.+)/i);
+        const serverMatch = text.match(/SERVER:\s*(.+)/i);
+        discovered.push({
+          ip: rinfo.address,
+          location: locationMatch ? locationMatch[1].trim() : undefined,
+          model: serverMatch ? serverMatch[1].trim() : 'LG webOS TV',
+        });
+      }
+    });
+
+    client.bind(() => {
+      try {
+        client.setBroadcast(true);
+        client.send(mSearchQuery, 0, mSearchQuery.length, 1900, '239.255.255.250');
+      } catch (err: any) {
+        console.warn('[SSDP] Error al emitir M-SEARCH:', err.message);
+      }
+    });
+
+    setTimeout(() => {
+      try { client.close(); } catch {}
+      res.json({
+        success: true,
+        count: discovered.length,
+        devices: discovered,
+      });
+    }, 2200);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Error en SSDP' });
   }
 });
 

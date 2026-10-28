@@ -113,7 +113,7 @@ jobs:
           yes | sdkmanager --licenses 2>/dev/null || true
           sdkmanager --install "platforms;android-36" "build-tools;36.0.0" 2>/dev/null || true
 
-      - name: Preparar y Sincronizar Proyecto Android (Capacitor)
+      - name: Preparar Proyecto Android con Permisos y Certificados
         run: |
           if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
             cat << 'EOF' > capacitor.config.json
@@ -131,10 +131,70 @@ jobs:
             }
           EOF
           fi
+
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap sync android
+
+          mkdir -p android/app/src/main/res/xml
+          cat << 'EOF' > android/app/src/main/res/xml/network_security_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                      <certificates src="user" />
+                  </trust-anchors>
+              </base-config>
+              <domain-config cleartextTrafficPermitted="true">
+                  <domain includeSubdomains="true">192.168.0.0/16</domain>
+                  <domain includeSubdomains="true">10.0.0.0/8</domain>
+                  <domain includeSubdomains="true">172.16.0.0/12</domain>
+                  <domain includeSubdomains="true">localhost</domain>
+                  <domain includeSubdomains="true">127.0.0.1</domain>
+                  <trust-anchors>
+                      <certificates src="system" />
+                      <certificates src="user" />
+                  </trust-anchors>
+              </domain-config>
+          </network-security-config>
+          EOF
+
+          sed -i 's/<application/<application android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml || true
+
+          cat << 'EOF' > android/app/src/main/java/com/lgremote/thinq/MainActivity.java
+          package com.lgremote.thinq;
+
+          import android.net.http.SslError;
+          import android.os.Bundle;
+          import android.webkit.SslErrorHandler;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import com.getcapacitor.BridgeActivity;
+          import com.getcapacitor.BridgeWebViewClient;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onStart() {
+                  super.onStart();
+                  try {
+                      WebView webView = this.getBridge().getWebView();
+                      if (webView != null) {
+                          WebSettings settings = webView.getSettings();
+                          settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                          settings.setDomStorageEnabled(true);
+                          webView.setWebViewClient(new BridgeWebViewClient(this.getBridge()) {
+                              @Override
+                              public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                                  handler.proceed();
+                              }
+                          });
+                      }
+                  } catch (Exception e) {}
+              }
+          }
+          EOF
 
       - name: Compilar APK con Gradle
         run: |

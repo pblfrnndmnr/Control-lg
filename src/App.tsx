@@ -35,6 +35,7 @@ import { VirtualLGOledTV } from './components/VirtualLGOledTV.tsx';
 import { DeviceScannerModal } from './components/DeviceScannerModal.tsx';
 import { GeminiAssistantModal } from './components/GeminiAssistantModal.tsx';
 import { PythonExportModal } from './components/PythonExportModal.tsx';
+import { KotlinExportModal } from './components/KotlinExportModal.tsx';
 import { AndroidInstallModal } from './components/AndroidInstallModal.tsx';
 import { PWAInstallButton } from './components/PWAInstallButton.tsx';
 
@@ -123,6 +124,7 @@ export default function App() {
   const [isDeviceScannerOpen, setIsDeviceScannerOpen] = useState(false);
   const [isGeminiModalOpen, setIsGeminiModalOpen] = useState(false);
   const [isPythonModalOpen, setIsPythonModalOpen] = useState(false);
+  const [isKotlinModalOpen, setIsKotlinModalOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [pairingPending, setPairingPending] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(false);
@@ -312,6 +314,29 @@ export default function App() {
 
         case 'NAVIGATE':
           activeWebOSClient.sendKey(value);
+          break;
+
+        case 'PLAY':
+          activeWebOSClient.play();
+          triggerNotification('Reproducir (Play) enviado a TV');
+          break;
+
+        case 'PAUSE':
+          activeWebOSClient.pause();
+          triggerNotification('Pausar enviado a TV');
+          break;
+
+        case 'STOP':
+          activeWebOSClient.stop();
+          triggerNotification('Detener enviado a TV');
+          break;
+
+        case 'REWIND':
+          activeWebOSClient.rewind();
+          break;
+
+        case 'FAST_FORWARD':
+          activeWebOSClient.fastForward();
           break;
 
         default:
@@ -697,6 +722,14 @@ export default function App() {
             <span>Código Python</span>
           </button>
           <button
+            onClick={() => setIsKotlinModalOpen(true)}
+            className="hover:text-indigo-400 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 text-indigo-300 font-semibold"
+            title="Módulo nativo en Kotlin para Android Studio"
+          >
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 border border-indigo-800 text-indigo-300">Kt</span>
+            <span>Nativo Kotlin</span>
+          </button>
+          <button
             onClick={() => setIsInstallModalOpen(true)}
             className="hover:text-teal-400 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 text-teal-300 font-semibold"
           >
@@ -991,6 +1024,14 @@ export default function App() {
       <PythonExportModal
         isOpen={isPythonModalOpen}
         onClose={() => setIsPythonModalOpen(false)}
+        activeIp={activeTV.ip}
+        activeMac={activeTV.mac}
+      />
+
+      {/* Kotlin Native Module Modal */}
+      <KotlinExportModal
+        isOpen={isKotlinModalOpen}
+        onClose={() => setIsKotlinModalOpen(false)}
         activeIp={activeTV.ip}
         activeMac={activeTV.mac}
       />

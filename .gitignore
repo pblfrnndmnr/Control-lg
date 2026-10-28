@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+android/
+*.apk
+*.jar
+dev-dist/
